@@ -1,36 +1,79 @@
 package com.joebee.android_rc;
 
-import java.util.Set;
-
 import android.os.Bundle;
+import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.content.Intent;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
-import android.widget.Switch;
-import android.widget.Toast;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.TextView;
 import at.abraxas.amarino.Amarino;
 
-public class Main extends Activity {	
-	private Switch tilt_switch;
+public class Main extends Activity implements SensorEventListener {
+	private CheckBox cbTiltSteer;
+	private SeekBar sbAccelerator;
 	private ImageButton left_button;
 	private ImageButton right_button;
-	String deviceAddress;
-	
+	String deviceAddress = "00:12:10:17:02:39";
+	TextView yViewO = null;
+	TextView accInfo = null;
+
+	private float yLimit = 4;
+	private SensorManager mSensorManager;
+	private Sensor mAccelerometer;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		connectBluetooth();
+		yViewO = (TextView) findViewById(R.id.yboxo);
+		accInfo = (TextView) findViewById(R.id.acc_info);
 		
-		this.setTilt_switch((Switch) this.findViewById(R.id.switch1));
-		this.setLeft_button((ImageButton) this.findViewById(R.id.leftButton));
-		this.setRight_button((ImageButton) this.findViewById(R.id.rightButton));
+		cbTiltSteer = (CheckBox) this.findViewById(R.id.checkBox1);
+		left_button = (ImageButton) findViewById(R.id.leftButton);
+		right_button = (ImageButton) findViewById(R.id.rightButton);
+		sbAccelerator = (SeekBar) findViewById(R.id.seekBarAccelerator);
+
+		sbAccelerator.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			public void onProgressChanged(SeekBar seekBar, int progress,
+					boolean fromUser) {
+				// TODO Auto-generated method stub
+				accInfo.setText("SeekBar value is " + progress);
+			}
+
+			public void onStartTrackingTouch(SeekBar seekBar) { /* TODO Auto-generated method stub */ }
+
+			public void onStopTrackingTouch(SeekBar seekBar) { /* TODO Auto-generated method stub */ }
+		});
+
+		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		mAccelerometer = mSensorManager
+				.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+		mSensorManager.registerListener(this, mAccelerometer,
+				SensorManager.SENSOR_DELAY_NORMAL);
 	}
-	/*@Override
+
+	protected void onResume() {
+		super.onResume();
+		mSensorManager.registerListener(this, mAccelerometer,
+				SensorManager.SENSOR_DELAY_NORMAL);
+	}
+
+	protected void onPause() {
+		super.onPause();
+		mSensorManager.unregisterListener(this);
+	}
+
+	@Override
 	protected void onStart() {
 		super.onStart();
 		Amarino.connect(this, deviceAddress);
@@ -40,76 +83,37 @@ public class Main extends Activity {
 	protected void onStop() {
 		super.onStop();
 		Amarino.disconnect(this, deviceAddress);
-	}*/
-	
-	public void connectBluetooth(){
-		BluetoothAdapter mBluetoothAdapter = BluetoothAdapter
-				.getDefaultAdapter();
-		if (mBluetoothAdapter == null) {
-			// Device does not support Bluetooth
-		}
-		if (mBluetoothAdapter.isEnabled()) {
-			Toast.makeText(this, "Bluetooth Enabled", Toast.LENGTH_SHORT);
-		}
-		else{
-			Intent enableBtIntent = new Intent(
-					BluetoothAdapter.ACTION_REQUEST_ENABLE);
-			startActivityForResult(enableBtIntent, 1);
-		}
+	}
 
-		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter
-				.getBondedDevices();
-		// If there are paired devices
-		if (pairedDevices.size() > 0) {			
-			// Loop through paired devices
-			for (BluetoothDevice device : pairedDevices) {
-				// Add the name and address to an array adapter to show in a
-				// ListView
-				deviceAddress = device.getAddress();
-				String deviceStatus = device.getName() + "\n" + deviceAddress;
-				Toast.makeText(this, deviceStatus, Toast.LENGTH_LONG).show();
-			}
-		}
-		
+	public void rightButtonPressed(View v) {
+		Amarino.sendDataToArduino(this, deviceAddress, 'r', true);
 	}
-	
-	public void rightButtonPressed(View v){
-		Toast.makeText(this, "Right Pressed" , Toast.LENGTH_LONG).show();
-		//Amarino.sendDataToArduino(this, deviceAddress, 'r', true);
+
+	public void leftButtonPressed(View v) {
+		Amarino.sendDataToArduino(this, deviceAddress, 'l', true);
 	}
-	
-	public void leftButtonPressed(View v){
-		Toast.makeText(this, "Left Pressed" , Toast.LENGTH_LONG).show();
-		//Amarino.sendDataToArduino(this, deviceAddress, 'l', true);
-	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.activity_main, menu);
 		return true;
 	}
 
-	public Switch getTilt_switch() {
-		return tilt_switch;
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
 	}
 
-	public void setTilt_switch(Switch tilt_switch) {
-		this.tilt_switch = tilt_switch;
-	}
+	public void onSensorChanged(SensorEvent event) {
+		Log.d("tag", "onSensorChanged: " + event.values[1]);
+		float y = event.values[1];
 
-	public ImageButton getLeft_button() {
-		return left_button;
-	}
+		yViewO.setText("Orientation Y: " + y);
+		if (y > yLimit || y < -yLimit) {
+			if (y > yLimit)
+				rightButtonPressed(right_button);
 
-	public void setLeft_button(ImageButton left_button) {
-		this.left_button = left_button;
-	}
-
-	public ImageButton getRight_button() {
-		return right_button;
-	}
-
-	public void setRight_button(ImageButton right_button) {
-		this.right_button = right_button;
+			else if (y < -yLimit)
+				leftButtonPressed(left_button);
+		}
 	}
 }
