@@ -12,8 +12,7 @@
            android:layout_alignParentBottom="true"
            android:layout_alignParentLeft="true"
            android:background="@null"
-           android:src="@drawable/left" 
-           android:onClick="leftButtonPressed" />
+           android:src="@drawable/left" />
 
        <ImageButton
            android:id="@+id/rightButton"
@@ -23,8 +22,7 @@
            android:layout_alignParentBottom="true"
            android:layout_alignParentRight="true"
            android:background="@null"
-           android:src="@drawable/right"
-           android:onClick="rightButtonPressed" />
+           android:src="@drawable/right" />
 
        <TextView
            android:id="@+id/textView1"
@@ -53,53 +51,31 @@
            android:textAppearance="?android:attr/textAppearanceLarge"
            android:textColor="@color/white" />
 
-       <!-- <SeekBar
-           android:id="@+id/seekBarAccelerator"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_above="@+id/textView1"
-           android:layout_alignLeft="@+id/textView1"
-           android:layout_alignRight="@+id/textView1"
-           android:layout_marginBottom="33dp"
-           android:background="@color/white"
-           android:rotation="270"
-           android:scrollbarSize="1000dp" /> -->
-
        <CheckBox
-           android:id="@+id/checkBox1"
+           android:id="@+id/tiltSteerCheckBox"
            android:layout_width="wrap_content"
            android:layout_height="wrap_content"
            android:layout_alignParentRight="true"
            android:layout_alignParentTop="true"
            android:text="Tilt Steering" />
 
-        <Button
-            android:id="@+id/reverseButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/textView1"
-            android:layout_alignLeft="@+id/forwardButton"
-            android:layout_marginBottom="15dp"
-            android:onClick="reversePressed"
-            android:text="Reverse" />
+       <SeekBar
+           android:id="@+id/seekBarAccelerator"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:layout_above="@+id/textView1"
+           android:layout_toLeftOf="@+id/rightButton"
+           android:layout_toRightOf="@+id/leftButton"
+           android:background="@color/white"
+           android:scrollbarSize="1000dp" />
 
-        <Button
-            android:id="@+id/forwardButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/checkBox1"
-            android:layout_centerHorizontal="true"
-            android:onClick="forwardPressed"
-            android:text="Forward" />
-
-        <Button
-            android:id="@+id/stopButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignLeft="@+id/reverseButton"
-            android:layout_alignRight="@+id/reverseButton"
-            android:layout_alignTop="@+id/rightButton"
-            android:onClick="stopPressed"
-            android:text="Stop" />
+       <Button
+           android:id="@+id/stopButton"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:layout_above="@+id/seekBarAccelerator"
+           android:layout_centerHorizontal="true"
+           android:layout_marginBottom="17dp"
+           android:text="Stop" />
        
    </RelativeLayout>

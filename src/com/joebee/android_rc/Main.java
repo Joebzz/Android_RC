@@ -22,12 +22,16 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
-//import android.widget.SeekBar;
-//import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import at.abraxas.amarino.Amarino;
 
@@ -37,11 +41,9 @@ import at.abraxas.amarino.Amarino;
  */
 public class Main extends Activity implements SensorEventListener {
 	private CheckBox cbTiltSteer;
-	//private SeekBar sbAccelerator;
+	private SeekBar sbAccelerator;
 	private ImageButton left_button;
 	private ImageButton right_button;
-	private Button forward_button;
-	private Button reverse_button;
 	private Button stop_button;
 	
 	String deviceAddress = "00:12:10:17:02:39";
@@ -59,31 +61,61 @@ public class Main extends Activity implements SensorEventListener {
 		yViewO = (TextView) findViewById(R.id.yboxo);
 		accInfo = (TextView) findViewById(R.id.acc_info);
 		
-		setCbTiltSteer((CheckBox) findViewById(R.id.checkBox1));
+		cbTiltSteer = (CheckBox) findViewById(R.id.tiltSteerCheckBox);
 		left_button = (ImageButton) findViewById(R.id.leftButton);
 		right_button = (ImageButton) findViewById(R.id.rightButton);
-		setForward_button((Button) findViewById(R.id.forwardButton));
-		setReverse_button((Button) findViewById(R.id.reverseButton));
-		setStop_button((Button) findViewById(R.id.stopButton));
-		//sbAccelerator = (SeekBar) findViewById(R.id.seekBarAccelerator);
-
-		/*sbAccelerator.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			public void onProgressChanged(SeekBar seekBar, int progress,
-					boolean fromUser) {
-				// TODO Auto-generated method stub
+		stop_button = (Button) findViewById(R.id.stopButton);
+		
+		sbAccelerator = (SeekBar) findViewById(R.id.seekBarAccelerator);
+		
+		left_button.setOnTouchListener(new OnTouchListener() {
+		    public boolean onTouch(View v, MotionEvent event) {
+				if(event.getAction() == MotionEvent.ACTION_DOWN) {
+					leftButtonPressed(v);
+		        } else if (event.getAction() == MotionEvent.ACTION_UP) {
+		            ResetSteering();
+		        }
+				return false;
+			}
+		});
+		
+		right_button.setOnTouchListener(new OnTouchListener() {
+		  	public boolean onTouch(View v, MotionEvent event) {
+		  		if(event.getAction() == MotionEvent.ACTION_DOWN) {
+		  			rightButtonPressed(v);
+		        } else if (event.getAction() == MotionEvent.ACTION_UP) {
+		            ResetSteering();
+		        }
+		  		
+				return false;
+			}
+		});
+		
+		stop_button.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				stopPressed();
+			}
+		});
+		
+		
+		sbAccelerator.setProgress(30);
+		sbAccelerator.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 				accInfo.setText("SeekBar value is " + progress);
+				acceleratorEvent(progress);
 			}
 
-			public void onStartTrackingTouch(SeekBar seekBar) {  TODO Auto-generated method stub  }
+			public void onStartTrackingTouch(SeekBar seekBar) {   }
 
-			public void onStopTrackingTouch(SeekBar seekBar) {  TODO Auto-generated method stub  }
-		});*/
+			public void onStopTrackingTouch(SeekBar seekBar) {  }
+		});
 
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		mAccelerometer = mSensorManager
 				.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		mSensorManager.registerListener(this, mAccelerometer,
 				SensorManager.SENSOR_DELAY_NORMAL);
+		
 	}
 
 	protected void onResume() {
@@ -92,6 +124,14 @@ public class Main extends Activity implements SensorEventListener {
 				SensorManager.SENSOR_DELAY_NORMAL);
 	}
 
+	// Functions to connect and disconnect from arduino
+	private void Connect() {
+		Amarino.connect(this, deviceAddress);
+	}
+	private void DisConnect() {
+		Amarino.disconnect(this, deviceAddress);
+	}
+	
 	protected void onPause() {
 		super.onPause();
 		mSensorManager.unregisterListener(this);
@@ -100,88 +140,76 @@ public class Main extends Activity implements SensorEventListener {
 	@Override
 	protected void onStart() {
 		super.onStart();
-		Amarino.connect(this, deviceAddress);
+		Connect();
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		Amarino.disconnect(this, deviceAddress);
+		DisConnect();
 	}
 
+	public void acceleratorEvent(int seekBarValue) {
+		Log.d("tag", "onAcceleratorChanged: " +  Math.abs(seekBarValue -30));
+		if(seekBarValue > 30)
+			Amarino.sendDataToArduino(this, deviceAddress, 'f',  seekBarValue-30);
+		else if(seekBarValue < 30)
+			Amarino.sendDataToArduino(this, deviceAddress, 'b',  Math.abs(seekBarValue-30));
+		else
+			stopPressed();
+	}
+	
 	public void rightButtonPressed(View v) {
 		Amarino.sendDataToArduino(this, deviceAddress, 'r', true);
 	}
-
+	
 	public void leftButtonPressed(View v) {
 		Amarino.sendDataToArduino(this, deviceAddress, 'l', true);
 	}
-
-	public void forwardPressed(View v) {
-		Amarino.sendDataToArduino(this, deviceAddress, 'f', true);
-	}
-
-	public void reversePressed(View v) {
-		Amarino.sendDataToArduino(this, deviceAddress, 'b', true);
-	}
 	
-	public void stopPressed(View v) {
+	public void stopPressed() {
+		sbAccelerator.setProgress(30);
 		Amarino.sendDataToArduino(this, deviceAddress, 's', true);
 	}
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.activity_main, menu);
+		
 		return true;
 	}
-
-	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if(item.getItemId() == R.id.refreshConnectionButton) {
+			DisConnect();
+			Connect();
+			return true;
+		}
+		
+		return false;		
 	}
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
 	public void onSensorChanged(SensorEvent event) {
-		Log.d("tag", "onSensorChanged: " + event.values[1]);
-		float y = event.values[1];
-
-		yViewO.setText("Orientation Y: " + y);
-		if (y > yLimit || y < -yLimit) {
+		if(cbTiltSteer.isChecked()){
+			Log.d("tag", "onSensorChanged: " + event.values[1]);
+		
+			float y = event.values[1];
+			
+			yViewO.setText("Orientation Y: " + y);
+		
 			if (y > yLimit)
-				rightButtonPressed(right_button);
+				Amarino.sendDataToArduino(this, deviceAddress, 'r', true);
 
 			else if (y < -yLimit)
-				leftButtonPressed(left_button);
+				Amarino.sendDataToArduino(this, deviceAddress, 'l', true);
+			else
+				ResetSteering();
 		}
 	}
-
-	public CheckBox getCbTiltSteer() {
-		return cbTiltSteer;
-	}
-
-	public void setCbTiltSteer(CheckBox cbTiltSteer) {
-		this.cbTiltSteer = cbTiltSteer;
-	}
-
-	public Button getReverse_button() {
-		return reverse_button;
-	}
-
-	public void setReverse_button(Button reverse_button) {
-		this.reverse_button = reverse_button;
-	}
-
-	public Button getStop_button() {
-		return stop_button;
-	}
-
-	public void setStop_button(Button stop_button) {
-		this.stop_button = stop_button;
-	}
-
-	public Button getForward_button() {
-		return forward_button;
-	}
-
-	public void setForward_button(Button forward_button) {
-		this.forward_button = forward_button;
+	
+	public void ResetSteering(){
+		Amarino.sendDataToArduino(this, deviceAddress, 'v', true);
 	}
 }

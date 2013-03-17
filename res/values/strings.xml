@@ -11,5 +11,7 @@
 
     <string name="menu_settings">Settings</string>
     <string name="title_activity_main">Android RC</string>
+    <string name="refreshconnection">Refresh</string>
+    
 
 </resources>
