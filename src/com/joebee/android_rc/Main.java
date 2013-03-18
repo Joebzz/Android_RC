@@ -150,11 +150,12 @@ public class Main extends Activity implements SensorEventListener {
 	}
 
 	public void acceleratorEvent(int seekBarValue) {
-		Log.d("tag", "onAcceleratorChanged: " +  Math.abs(seekBarValue -30));
+		int outputToArduino = seekBarValue - 30;
+		Log.d("tag", "onAcceleratorChanged: " +  Math.abs(outputToArduino));
 		if(seekBarValue > 30)
-			Amarino.sendDataToArduino(this, deviceAddress, 'f',  seekBarValue-30);
+			Amarino.sendDataToArduino(this, deviceAddress, 'f',  outputToArduino);
 		else if(seekBarValue < 30)
-			Amarino.sendDataToArduino(this, deviceAddress, 'b',  Math.abs(seekBarValue-30));
+			Amarino.sendDataToArduino(this, deviceAddress, 'b',  Math.abs(outputToArduino));
 		else
 			stopPressed();
 	}
