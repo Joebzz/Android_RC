@@ -13,9 +13,16 @@
  */
 package com.joebee.android_rc;
 
+import java.util.Scanner;
+
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -25,31 +32,30 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
-import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import at.abraxas.amarino.Amarino;
+import at.abraxas.amarino.AmarinoIntent;
 
 /**
  * @author Joebee
- *
+ * 
  */
 public class Main extends Activity implements SensorEventListener {
-	private CheckBox cbTiltSteer;
-	private SeekBar sbAccelerator;
+	private SeekBar sb_accelerator;
 	private ImageButton left_button;
 	private ImageButton right_button;
-	private Button stop_button;
-	
-	String deviceAddress = "00:12:10:17:02:39";
-	TextView yViewO = null;
-	TextView accInfo = null;
+	private ImageButton stop_button;
+	private ArduinoReceiver arduino_receiver = new ArduinoReceiver();
+	private TextView TV;
+	//private AlertDialog sensor_alert;
 
+	private String device_address = "00:12:10:17:02:39";
+
+	public boolean set_tilt_steering;
 	private float yLimit = 4;
 	private SensorManager mSensorManager;
 	private Sensor mAccelerometer;
@@ -58,64 +64,95 @@ public class Main extends Activity implements SensorEventListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		yViewO = (TextView) findViewById(R.id.yboxo);
-		accInfo = (TextView) findViewById(R.id.acc_info);
-		
-		cbTiltSteer = (CheckBox) findViewById(R.id.tiltSteerCheckBox);
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+
+		TV = (TextView) findViewById(R.id.editText1);
+		device_address = prefs.getString("device_address_pref", "");
+		set_tilt_steering = prefs.getBoolean("tilt_steering_pref", false);
+
 		left_button = (ImageButton) findViewById(R.id.leftButton);
 		right_button = (ImageButton) findViewById(R.id.rightButton);
-		stop_button = (Button) findViewById(R.id.stopButton);
-		
-		sbAccelerator = (SeekBar) findViewById(R.id.seekBarAccelerator);
-		
-		left_button.setOnTouchListener(new OnTouchListener() {
-		    public boolean onTouch(View v, MotionEvent event) {
-				if(event.getAction() == MotionEvent.ACTION_DOWN) {
-					leftButtonPressed(v);
-		        } else if (event.getAction() == MotionEvent.ACTION_UP) {
-		            ResetSteering();
-		        }
+
+		if (!set_tilt_steering) {
+			// turn on the left & right buttons if they are not shown
+			if (!left_button.isShown())
+				left_button.setVisibility(View.VISIBLE);
+			if (!right_button.isShown())
+				right_button.setVisibility(View.VISIBLE);
+
+			// set the left button onclick actions and change the color of the
+			// button to green when pressed
+			left_button.setOnTouchListener(new OnTouchListener() {
+				public boolean onTouch(View v, MotionEvent event) {
+					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						left_button.setImageResource(R.drawable.left_green);
+						leftButtonPressed();
+					} else if (event.getAction() == MotionEvent.ACTION_UP) {
+						left_button.setImageResource(R.drawable.left);
+						ResetSteering();
+					}
+					return false;
+				}
+			});
+
+			// set the right button onclick actions and change the color of the
+			// button to green when pressed
+			right_button.setOnTouchListener(new OnTouchListener() {
+				public boolean onTouch(View v, MotionEvent event) {
+					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						right_button.setImageResource(R.drawable.right_green);
+						rightButtonPressed();
+					} else if (event.getAction() == MotionEvent.ACTION_UP) {
+						right_button.setImageResource(R.drawable.right);
+						ResetSteering();
+					}
+					return false;
+				}
+			});
+		}
+		// else if the tilt steering is selected turn off the image buttons for
+		// left & right
+		else {
+			left_button.setVisibility(View.GONE);
+			right_button.setVisibility(View.GONE);
+		}
+		stop_button = (ImageButton) findViewById(R.id.stopButton);
+
+		sb_accelerator = (SeekBar) findViewById(R.id.seekBarAccelerator);
+		stop_button.setOnTouchListener(new OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				if (event.getAction() == MotionEvent.ACTION_DOWN) {
+					stop_button.setImageResource(R.drawable.stop_green);
+					stopPressed();
+				} else if (event.getAction() == MotionEvent.ACTION_UP) {
+					stop_button.setImageResource(R.drawable.stop);
+				}
 				return false;
 			}
 		});
-		
-		right_button.setOnTouchListener(new OnTouchListener() {
-		  	public boolean onTouch(View v, MotionEvent event) {
-		  		if(event.getAction() == MotionEvent.ACTION_DOWN) {
-		  			rightButtonPressed(v);
-		        } else if (event.getAction() == MotionEvent.ACTION_UP) {
-		            ResetSteering();
-		        }
-		  		
-				return false;
-			}
-		});
-		
-		stop_button.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				stopPressed();
-			}
-		});
-		
-		
-		sbAccelerator.setProgress(30);
-		sbAccelerator.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				accInfo.setText("SeekBar value is " + progress);
-				acceleratorEvent(progress);
-			}
 
-			public void onStartTrackingTouch(SeekBar seekBar) {   }
+		sb_accelerator.setProgress(30);
+		sb_accelerator
+				.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+					public void onProgressChanged(SeekBar seekBar,
+							int progress, boolean fromUser) {
+						acceleratorEvent(progress);
+					}
 
-			public void onStopTrackingTouch(SeekBar seekBar) {  }
-		});
+					public void onStartTrackingTouch(SeekBar seekBar) {
+					}
+
+					public void onStopTrackingTouch(SeekBar seekBar) {
+					}
+				});
 
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		mAccelerometer = mSensorManager
 				.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		mSensorManager.registerListener(this, mAccelerometer,
 				SensorManager.SENSOR_DELAY_NORMAL);
-		
+
 	}
 
 	protected void onResume() {
@@ -126,12 +163,21 @@ public class Main extends Activity implements SensorEventListener {
 
 	// Functions to connect and disconnect from arduino
 	private void Connect() {
-		Amarino.connect(this, deviceAddress);
+		// in order to receive broadcasted intents we need to register our
+		// receiver
+		registerReceiver(arduino_receiver, new IntentFilter(
+				AmarinoIntent.ACTION_RECEIVED));
+		Amarino.connect(this, device_address);
+
 	}
+
 	private void DisConnect() {
-		Amarino.disconnect(this, deviceAddress);
+		stopPressed();
+		Amarino.disconnect(this, device_address);
+		// do never forget to unregister a registered receiver
+		unregisterReceiver(arduino_receiver);
 	}
-	
+
 	protected void onPause() {
 		super.onPause();
 		mSensorManager.unregisterListener(this);
@@ -151,66 +197,143 @@ public class Main extends Activity implements SensorEventListener {
 
 	public void acceleratorEvent(int seekBarValue) {
 		int outputToArduino = seekBarValue - 30;
-		Log.d("tag", "onAcceleratorChanged: " +  Math.abs(outputToArduino));
-		if(seekBarValue > 30)
-			Amarino.sendDataToArduino(this, deviceAddress, 'f',  outputToArduino);
-		else if(seekBarValue < 30)
-			Amarino.sendDataToArduino(this, deviceAddress, 'b',  Math.abs(outputToArduino));
+		Log.d("accelerator",
+				"onAcceleratorChanged: " + Math.abs(outputToArduino));
+		if (seekBarValue > 30)
+			Amarino.sendDataToArduino(this, device_address, 'f',
+					outputToArduino);
+		else if (seekBarValue < 30)
+			Amarino.sendDataToArduino(this, device_address, 'b',
+					Math.abs(outputToArduino));
 		else
 			stopPressed();
 	}
-	
-	public void rightButtonPressed(View v) {
-		Amarino.sendDataToArduino(this, deviceAddress, 'r', true);
+
+	public void rightButtonPressed() {
+		Amarino.sendDataToArduino(this, device_address, 'r', true);
 	}
-	
-	public void leftButtonPressed(View v) {
-		Amarino.sendDataToArduino(this, deviceAddress, 'l', true);
+
+	public void leftButtonPressed() {
+		Amarino.sendDataToArduino(this, device_address, 'l', true);
 	}
-	
+
 	public void stopPressed() {
-		sbAccelerator.setProgress(30);
-		Amarino.sendDataToArduino(this, deviceAddress, 's', true);
+		sb_accelerator.setProgress(30);
+		Amarino.sendDataToArduino(this, device_address, 's', true);
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.activity_main, menu);
-		
+
 		return true;
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if(item.getItemId() == R.id.refreshConnectionButton) {
+		Log.d("option_selected", "" + item.getTitle());
+		if (item.getItemId() == R.id.refreshConnectionButton) {
 			DisConnect();
 			Connect();
 			return true;
+		} else if (item.getItemId() == R.id.menu_settings) {
+			startActivity(new Intent(getBaseContext(), SettingsActivity.class));
+			return true;
+		} else if (item.getItemId() == R.id.checkSensors) {
+			checkSensorEvent();
+			return true;
 		}
-		
-		return false;		
+		return false;
 	}
-	public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
+	/*
+	 * private void CheckSensors() { checkSensorEvent(); AlertDialog.Builder AB
+	 * = new AlertDialog.Builder(this);
+	 * 
+	 * AB.setTitle("Sensors");
+	 * 
+	 * // set dialog message AB.setMessage("Message: " +
+	 * arduino_receiver.getResultData()); AB.setCancelable(true);
+	 * AB.setPositiveButton("OK", new DialogInterface.OnClickListener() { public
+	 * void onClick(DialogInterface dialog, int which) { sensor_alert.cancel();
+	 * } }); AB.setNeutralButton("Refresh", new
+	 * DialogInterface.OnClickListener() { public void onClick(DialogInterface
+	 * dialog, int which) { CheckSensors(); } });
+	 * 
+	 * sensor_alert = AB.create(); // show it sensor_alert.show(); }
+	 */
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+	}
+
+	public void checkSensorEvent() {
+		Amarino.sendDataToArduino(this, device_address, 'c', true);
+		Log.d("sent_checksensors", "sent collect data command");
+	}
 
 	public void onSensorChanged(SensorEvent event) {
-		if(cbTiltSteer.isChecked()){
-			Log.d("tag", "onSensorChanged: " + event.values[1]);
-		
+		if (set_tilt_steering) {
+			Log.d("tilt_changed", "onSensorChanged: " + event.values[1]);
+
 			float y = event.values[1];
-			
-			yViewO.setText("Orientation Y: " + y);
-		
+
 			if (y > yLimit)
-				Amarino.sendDataToArduino(this, deviceAddress, 'r', true);
+				Amarino.sendDataToArduino(this, device_address, 'r', true);
 
 			else if (y < -yLimit)
-				Amarino.sendDataToArduino(this, deviceAddress, 'l', true);
+				Amarino.sendDataToArduino(this, device_address, 'l', true);
 			else
 				ResetSteering();
 		}
 	}
-	
-	public void ResetSteering(){
-		Amarino.sendDataToArduino(this, deviceAddress, 'v', true);
+
+	public void ResetSteering() {
+		Amarino.sendDataToArduino(this, device_address, 'v', true);
+	}
+
+	/**
+	 * ArduinoReceiver is responsible for catching broadcasted Amarino events.
+	 * 
+	 * It extracts data from the intent and updates the android app
+	 */
+	public class ArduinoReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			int[] var = new int[10];
+			String data;
+			Log.d("arduino_receiver", "Received something");
+			// the type of data which is added to the intent
+			final int dataType = intent.getIntExtra(
+					AmarinoIntent.EXTRA_DATA_TYPE, -1);
+			TV.setText("RECIEVED");
+			// we only expect String data though, but it is better to check if
+			// really string was sent
+			// later Amarino will support differnt data types, so far data comes
+			// always as string and
+			// you have to parse the data to the type you have sent from
+			// Arduino, like it is shown below
+			if (dataType == AmarinoIntent.STRING_EXTRA) {
+				Scanner s = null;
+				data = intent.getStringExtra(AmarinoIntent.EXTRA_DATA);
+				Log.d("dataRecievedFromArduino", data);
+				try {
+					s = new Scanner(data);
+					s.useDelimiter(",\\s*");
+
+					int i = 1;
+					while (s.hasNext()) {
+						if (s.hasNextInt()) {
+							var[i] = s.nextInt();
+
+						} else {
+							s.next();
+						}
+						i++;
+					}
+				} finally {
+					TV.setText(Integer.toString(var[1]));
+					s.close();
+				}
+			}
+		}
 	}
 }

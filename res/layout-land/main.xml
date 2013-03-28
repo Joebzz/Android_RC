@@ -4,78 +4,64 @@
     android:layout_height="match_parent"
     android:background="@color/black"
     android:orientation="vertical" >
-       <ImageButton
-           android:id="@+id/leftButton"
-           android:contentDescription="@string/left"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_alignParentBottom="true"
-           android:layout_alignParentLeft="true"
-           android:background="@null"
-           android:src="@drawable/left" />
 
-       <ImageButton
-           android:id="@+id/rightButton"
-           android:contentDescription="@string/right"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_alignParentBottom="true"
-           android:layout_alignParentRight="true"
-           android:background="@null"
-           android:src="@drawable/right" />
+    <ImageButton
+        android:id="@+id/leftButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:background="@null"
+        android:contentDescription="@string/left"
+        android:src="@drawable/left" />
 
-       <TextView
-           android:id="@+id/textView1"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_alignParentBottom="true"
-           android:layout_centerHorizontal="true"
-           android:text="@string/accelerate"
-           android:textAppearance="?android:attr/textAppearanceLarge"
-           android:textColor="@color/white" />
-       
-      <TextView
-           android:id="@+id/yboxo"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_centerHorizontal="true"
-           android:textAppearance="?android:attr/textAppearanceLarge"
-           android:textColor="@color/white" />
-      
-      <TextView
-           android:id="@+id/acc_info"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_below="@+id/yboxo"
-           android:layout_centerHorizontal="true"
-           android:textAppearance="?android:attr/textAppearanceLarge"
-           android:textColor="@color/white" />
+    <ImageButton
+        android:id="@+id/rightButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:background="@null"
+        android:contentDescription="@string/right"
+        android:src="@drawable/right" />
 
-       <CheckBox
-           android:id="@+id/tiltSteerCheckBox"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_alignParentRight="true"
-           android:layout_alignParentTop="true"
-           android:text="Tilt Steering" />
+    <TextView
+        android:id="@+id/accelerateTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="@string/accelerate"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/white" />
 
-       <SeekBar
-           android:id="@+id/seekBarAccelerator"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_above="@+id/textView1"
-           android:layout_toLeftOf="@+id/rightButton"
-           android:layout_toRightOf="@+id/leftButton"
-           android:background="@color/white"
-           android:scrollbarSize="1000dp" />
+    <SeekBar
+        android:id="@+id/seekBarAccelerator"
+        android:layout_width="230dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/accelerateTextView"
+        android:layout_centerHorizontal="true"
+        android:maxHeight="10dp"
+        android:minHeight="10dp" />
 
-       <Button
-           android:id="@+id/stopButton"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_above="@+id/seekBarAccelerator"
-           android:layout_centerHorizontal="true"
-           android:layout_marginBottom="17dp"
-           android:text="Stop" />
-       
-   </RelativeLayout>
+    <ImageButton
+        android:id="@+id/stopButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/seekBarAccelerator"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="27dp"
+        android:background="@null"
+        android:contentDescription="@string/stop"
+        android:src="@drawable/stop" />
+
+    <TextView
+        android:id="@+id/editText1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" 
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/white" />
+
+</RelativeLayout>

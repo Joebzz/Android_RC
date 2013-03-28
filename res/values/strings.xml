@@ -1,17 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
     <string name="app_name">Android Buetooth RC</string>
     <string name="left">Left</string>
     <string name="right">Right</string>
-	<string name="accelerate">Accelerator</string>
-	<string name="tilt_switch">Tilt Steering</string>
+    <string name="accelerate">Accelerator</string>
+    <string name="stop">Stop</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_main">Android RC</string>
+    <string name="refreshconnection">Reconnect</string>
+    <string name="tilt_steering">Tilt Steering</string>
+    <string name="device_address">00:12:10:17:02:39</string>
+	<string name="sensors">Sensors</string>
 	
     <color name="black">#000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <string name="menu_settings">Settings</string>
-    <string name="title_activity_main">Android RC</string>
-    <string name="refreshconnection">Refresh</string>
-    
+    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="action_settings">Settings</string>
 
 </resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory
+        android:title="Connection Settings" >
+        
+        <EditTextPreference
+            android:key="device_address_pref"
+            android:title="Device Address"
+            android:summary="Edit the ddevice address of the bluetooth device"
+            android:defaultValue="@string/device_address"
+            android:digits="0123456789:ABCDEFabcdef"
+            />
+
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="Tilt Steering">
+        <CheckBoxPreference 
+            android:key="tilt_steering_pref"
+            android:title="Tilt Steering"/>
+    </PreferenceCategory>
+    
+</PreferenceScreen>

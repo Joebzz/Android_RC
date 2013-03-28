@@ -1,11 +1,19 @@
 /*
   Recieves The eventt sent from android app
   MAX pwm speed 255 min 50
+  
+  Analog input range A0 - A1 from 4.60V nothing - .187V blocked
+  Sensor Reading: IR LED's Sumovore pin 10(right) & 9(left)  connected to Arduino A0 & A1 respectivley
+  value 44 object in front
+  value 1023 no object
 */
 #include <MeetAndroid.h>
+#include <String>
 
-#define MAX_SPEED 255
-#define STEER_SPEED 90
+#define MAX_SPEED    255
+#define STEER_SPEED  90
+#define SENSOR_MAX   1023
+#define SENSOR_MIN   44
 
 // create the meetAndsoid for recieving data from the android app
 MeetAndroid meetAndroid;
@@ -16,10 +24,13 @@ float motor_speed_right = 0;
 int steerLeft;
 int steerRight;
 
-int rightMotor1 = 9;     //connects to 5 on sumophor
-int rightMotor2 = 6;     //connects to 6 on sumophor
-int leftMotor1 = 10;     //connects to 4 on sumophor
-int leftMotor2 = 11;     //connects to 3 on sumophor
+int rightIRsensorPin = A0; //analog pin 0
+int leftIRsensorPin = A1; //analog pin 0
+
+int rightMotor1 = 3;     //connects to 5 on sumophor
+int rightMotor2 = 9;     //connects to 6 on sumophor
+int leftMotor1 = 5;     //connects to 4 on sumophor
+int leftMotor2 = 6;     //connects to 3 on sumophor
 
 boolean forward = false;
 boolean backward = false;
@@ -29,7 +40,7 @@ boolean rightRotate = false;
 void setup() {  
   Serial.begin(9600); 
   stopAll();
-
+  
   // register callback functions, which will be called when an associated event occurs.
   // - the first parameter is the name of your function
   // - the second parameter ('l', 'r', 'f', etc...) is the flag sent from my Android application
@@ -39,17 +50,20 @@ void setup() {
   meetAndroid.registerFunction(reverseEvent, 'b');
   meetAndroid.registerFunction(stopEvent, 's');
   meetAndroid.registerFunction(resetSteeringEvent, 'v');
+  meetAndroid.registerFunction(checkSensorValues, 'c');
   
   // initialize the digital pin as an output.
   pinMode(leftMotor1, OUTPUT);  
   pinMode(leftMotor2, OUTPUT); 
   pinMode(rightMotor1, OUTPUT); 
   pinMode(rightMotor2, OUTPUT); 
+  pinMode(rightIRsensorPin, INPUT);
+  pinMode(leftIRsensorPin, INPUT);
 }
 
 void loop() {
-  meetAndroid.receive(); // you need to keep this in your loop() to receive events
-
+  meetAndroid.receive();
+  
   //checks for formward or backwards and turns the motors respectivly
   if(forward) {
     analogWrite(leftMotor1,motor_speed_left + steerRight);
@@ -142,16 +156,36 @@ void resetSteeringEvent(byte flag, byte numOfValues){
 void stopEvent(byte flag, byte numOfValues) {
   stopAll();
 }
+
 void resetSteering(){
  steerLeft = STEER_SPEED;
  steerRight = STEER_SPEED; 
  rightRotate = false;
  leftRotate = false;
 }
+
 void stopAll(){
   forward = false;
   backward = false;
   motor_speed_left = 0;
   motor_speed_right = 0;
   resetSteering();
+}
+
+void checkSensorValues(byte flag, byte numOfValues){
+  meetAndroid.send("Hello from Arduino");
+  delay(100);
+  //  int rightIRsensorVal = analogRead(rightIRsensorPin);
+//  int leftIRsensorVal = analogRead(leftIRsensorPin);
+//  
+//  //put sensorvalues together and seperate with ','
+//  char charBuf[50];
+//  String out = "";
+//  
+//  out += rightIRsensorVal;
+//  out += ',';
+//  out += leftIRsensorVal;
+//  
+//  out.toCharArray(charBuf, 10); //convert it to a char array in charBuf
+//  meetAndroid.send(charBuf);    //send to android
 }
