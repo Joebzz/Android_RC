@@ -32,11 +32,10 @@ public final class R {
     }
     public static final class id {
         public static final int accelerateTextView=0x7f090002;
-        public static final int checkSensors=0x7f090008;
-        public static final int editText1=0x7f090005;
+        public static final int checkSensors=0x7f090007;
         public static final int leftButton=0x7f090000;
-        public static final int menu_settings=0x7f090006;
-        public static final int refreshConnectionButton=0x7f090007;
+        public static final int menu_settings=0x7f090005;
+        public static final int refreshConnectionButton=0x7f090006;
         public static final int rightButton=0x7f090001;
         public static final int seekBarAccelerator=0x7f090003;
         public static final int stopButton=0x7f090004;

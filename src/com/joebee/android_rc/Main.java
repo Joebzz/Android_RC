@@ -18,8 +18,10 @@ import java.util.Scanner;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -36,7 +38,6 @@ import android.view.View.OnTouchListener;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.TextView;
 import at.abraxas.amarino.Amarino;
 import at.abraxas.amarino.AmarinoIntent;
 
@@ -50,8 +51,9 @@ public class Main extends Activity implements SensorEventListener {
 	private ImageButton right_button;
 	private ImageButton stop_button;
 	private ArduinoReceiver arduino_receiver = new ArduinoReceiver();
-	private TextView TV;
-	//private AlertDialog sensor_alert;
+
+	private String sensor_results = "";
+	private AlertDialog sensor_alert;
 
 	private String device_address = "00:12:10:17:02:39";
 
@@ -67,13 +69,12 @@ public class Main extends Activity implements SensorEventListener {
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(this);
 
-		TV = (TextView) findViewById(R.id.editText1);
 		device_address = prefs.getString("device_address_pref", "");
 		set_tilt_steering = prefs.getBoolean("tilt_steering_pref", false);
 
 		left_button = (ImageButton) findViewById(R.id.leftButton);
 		right_button = (ImageButton) findViewById(R.id.rightButton);
-
+		
 		if (!set_tilt_steering) {
 			// turn on the left & right buttons if they are not shown
 			if (!left_button.isShown())
@@ -163,11 +164,11 @@ public class Main extends Activity implements SensorEventListener {
 
 	// Functions to connect and disconnect from arduino
 	private void Connect() {
+		Amarino.connect(this, device_address);
 		// in order to receive broadcasted intents we need to register our
 		// receiver
-		registerReceiver(arduino_receiver, new IntentFilter(
-				AmarinoIntent.ACTION_RECEIVED));
-		Amarino.connect(this, device_address);
+		getApplicationContext().registerReceiver(arduino_receiver,
+				new IntentFilter(AmarinoIntent.ACTION_RECEIVED));
 
 	}
 
@@ -175,7 +176,7 @@ public class Main extends Activity implements SensorEventListener {
 		stopPressed();
 		Amarino.disconnect(this, device_address);
 		// do never forget to unregister a registered receiver
-		unregisterReceiver(arduino_receiver);
+		getApplicationContext().unregisterReceiver(arduino_receiver);
 	}
 
 	protected void onPause() {
@@ -246,28 +247,34 @@ public class Main extends Activity implements SensorEventListener {
 		return false;
 	}
 
-	/*
-	 * private void CheckSensors() { checkSensorEvent(); AlertDialog.Builder AB
-	 * = new AlertDialog.Builder(this);
-	 * 
-	 * AB.setTitle("Sensors");
-	 * 
-	 * // set dialog message AB.setMessage("Message: " +
-	 * arduino_receiver.getResultData()); AB.setCancelable(true);
-	 * AB.setPositiveButton("OK", new DialogInterface.OnClickListener() { public
-	 * void onClick(DialogInterface dialog, int which) { sensor_alert.cancel();
-	 * } }); AB.setNeutralButton("Refresh", new
-	 * DialogInterface.OnClickListener() { public void onClick(DialogInterface
-	 * dialog, int which) { CheckSensors(); } });
-	 * 
-	 * sensor_alert = AB.create(); // show it sensor_alert.show(); }
-	 */
+	private void CheckSensors() {
+		AlertDialog.Builder AB = new AlertDialog.Builder(this);
+		
+		AB.setTitle("Sensors");
+
+		// set dialog message
+		AB.setMessage(sensor_results);
+		AB.setCancelable(true);
+		AB.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				sensor_alert.cancel();
+			}
+		});
+		AB.setNeutralButton("Refresh", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				checkSensorEvent();
+			}
+		});
+		sensor_alert = AB.create();
+		// show it
+		sensor_alert.show();
+	}
+
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
 	}
 
 	public void checkSensorEvent() {
 		Amarino.sendDataToArduino(this, device_address, 'c', true);
-		Log.d("sent_checksensors", "sent collect data command");
 	}
 
 	public void onSensorChanged(SensorEvent event) {
@@ -296,15 +303,14 @@ public class Main extends Activity implements SensorEventListener {
 	 * It extracts data from the intent and updates the android app
 	 */
 	public class ArduinoReceiver extends BroadcastReceiver {
-		@Override
 		public void onReceive(Context context, Intent intent) {
 			int[] var = new int[10];
 			String data;
-			Log.d("arduino_receiver", "Received something");
+			Log.d("arduino_recveiver", "Recieved");
 			// the type of data which is added to the intent
 			final int dataType = intent.getIntExtra(
 					AmarinoIntent.EXTRA_DATA_TYPE, -1);
-			TV.setText("RECIEVED");
+
 			// we only expect String data though, but it is better to check if
 			// really string was sent
 			// later Amarino will support differnt data types, so far data comes
@@ -319,7 +325,7 @@ public class Main extends Activity implements SensorEventListener {
 					s = new Scanner(data);
 					s.useDelimiter(",\\s*");
 
-					int i = 1;
+					int i = 0;
 					while (s.hasNext()) {
 						if (s.hasNextInt()) {
 							var[i] = s.nextInt();
@@ -330,8 +336,9 @@ public class Main extends Activity implements SensorEventListener {
 						i++;
 					}
 				} finally {
-					TV.setText(Integer.toString(var[1]));
 					s.close();
+					sensor_results = "Left: " + var[0] + " - Right: " + var[1];
+					CheckSensors();
 				}
 			}
 		}

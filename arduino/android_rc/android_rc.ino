@@ -24,8 +24,8 @@ float motor_speed_right = 0;
 int steerLeft;
 int steerRight;
 
-int rightIRsensorPin = A0; //analog pin 0
-int leftIRsensorPin = A1; //analog pin 0
+int rightIRsensorPin = 0; //analog pin 0
+int leftIRsensorPin = 1; //analog pin 0
 
 int rightMotor1 = 3;     //connects to 5 on sumophor
 int rightMotor2 = 9;     //connects to 6 on sumophor
@@ -173,19 +173,21 @@ void stopAll(){
 }
 
 void checkSensorValues(byte flag, byte numOfValues){
-  meetAndroid.send("Hello from Arduino");
-  delay(100);
-  //  int rightIRsensorVal = analogRead(rightIRsensorPin);
-//  int leftIRsensorVal = analogRead(leftIRsensorPin);
-//  
-//  //put sensorvalues together and seperate with ','
-//  char charBuf[50];
-//  String out = "";
-//  
-//  out += rightIRsensorVal;
-//  out += ',';
-//  out += leftIRsensorVal;
-//  
-//  out.toCharArray(charBuf, 10); //convert it to a char array in charBuf
-//  meetAndroid.send(charBuf);    //send to android
+  checkSensors();
 }
+void checkSensors(){
+  int rightIRsensorVal = analogRead(rightIRsensorPin);
+  int leftIRsensorVal = analogRead(leftIRsensorPin);
+  
+  //put sensorvalues together and seperate with ','
+  char charBuf[50];
+  String out = "";
+  
+  out += rightIRsensorVal;
+  out += ',';
+  out += leftIRsensorVal;
+  
+  out.toCharArray(charBuf, 10); //convert it to a char array in charBuf
+  meetAndroid.send(charBuf);    //send to android
+}
+
